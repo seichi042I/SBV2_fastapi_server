@@ -1,5 +1,6 @@
 from pathlib import Path
 from typing import Any, Optional, Union
+import librosa
 
 import numpy as np
 import torch
@@ -34,6 +35,14 @@ from style_bert_vits2.voice import adjust_voice
 # if TYPE_CHECKING:
 #     import gradio as gr
 
+def apply_robot_effect(y,sr,pitch_step = 1):
+    # Apply pitch shift
+    y_pitched = librosa.effects.pitch_shift(y, sr=sr, n_steps=pitch_step)
+
+    # Apply clipping to create a robotic effect
+    y_robotic = np.clip(y_pitched, -1.0, 1.0)
+    
+    return y_robotic
 
 class TTSModel:
     """
@@ -47,6 +56,7 @@ class TTSModel:
         config_path: Union[Path, HyperParameters],
         style_vec_path: Union[Path, NDArray[Any]],
         device: str,
+        robot_effect: bool = False
     ) -> None:
         """
         Style-Bert-Vits2 の音声合成モデルを初期化する。
@@ -227,6 +237,7 @@ class TTSModel:
         given_tone: Optional[list[int]] = None,
         pitch_scale: float = 1.0,
         intonation_scale: float = 1.0,
+        robot_effect:bool = False
     ) -> tuple[int, NDArray[Any]]:
         """
         テキストから音声を合成する。
@@ -329,6 +340,9 @@ class TTSModel:
                 pitch_scale=pitch_scale,
                 intonation_scale=intonation_scale,
             )
+        print(f"audio: {audio}, type: {type(audio)}, shape: {audio.shape}")
+        if robot_effect:
+            audio = apply_robot_effect(audio,self.hyper_parameters.data.sampling_rate)
         audio = self.__convert_to_16_bit_wav(audio)
         return (self.hyper_parameters.data.sampling_rate, audio)
 

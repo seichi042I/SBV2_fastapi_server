@@ -10,6 +10,8 @@ from io import BytesIO
 from pathlib import Path
 from typing import Any, Optional
 from urllib.parse import unquote
+import librosa
+import numpy as np
 
 import GPUtil
 import psutil
@@ -88,6 +90,7 @@ def load_models(model_holder: TTSModelHolder):
         # 起動時に全てのモデルを読み込むのは時間がかかりメモリを食うのでやめる
         # model.load()
         loaded_models.append(model)
+    
 
 
 if __name__ == "__main__":
@@ -177,6 +180,7 @@ if __name__ == "__main__":
         reference_audio_path: Optional[str] = Query(
             None, description="スタイルを音声ファイルで行う"
         ),
+        robot_effect: Optional[bool] = Query(False, description="ロボエフェクトをつけるかどうか"),
     ):
         """Infer text to speech(テキストから感情付き音声を生成する)"""
         logger.info(
@@ -224,6 +228,7 @@ if __name__ == "__main__":
             use_assist_text=bool(assist_text),
             style=style,
             style_weight=style_weight,
+            robot_effect=robot_effect
         )
         logger.success("Audio data generated and sent successfully")
         with BytesIO() as wavContent:
